@@ -7,6 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import RecentProjects from "@/components/workspace/project/recent-projects";
 import RecentTasks from "@/components/workspace/task/recent-tasks";
 import RecentMembers from "@/components/workspace/member/recent-members";
+import PermissionsGuard from "@/components/resuable/permission-guard";
+import { Permissions } from "@/constant";
 const WorkspaceDashboard = () => {
   const { onOpen } = useCreateProjectDialog();
   return (
@@ -20,10 +22,12 @@ const WorkspaceDashboard = () => {
             Here&apos;s an overview for this workspace!
           </p>
         </div>
-        <Button onClick={onOpen}>
-          <Plus />
-          New Project
-        </Button>
+        <PermissionsGuard requiredPermission={Permissions.CREATE_PROJECT}>
+          <Button onClick={onOpen}>
+            <Plus />
+            New Project
+          </Button>
+        </PermissionsGuard>
       </div>
       <WorkspaceAnalytics />
       <div className="mt-4">

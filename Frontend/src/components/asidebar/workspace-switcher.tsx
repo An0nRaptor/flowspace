@@ -45,8 +45,6 @@ export function WorkspaceSwitcher() {
     refetchOnMount: true,
   });
 
-  console.log("✅ Workspace data:", data);
-console.log("🧩 Workspaces:", data?.workspaces);
   const workspaces = data?.workspaces;
 
   useEffect(() => {
@@ -93,7 +91,7 @@ console.log("🧩 Workspaces:", data?.workspaces);
                     </div>
                     <div className="grid flex-1 text-left text-sm leading-tight">
                       <span className="truncate font-semibold">
-                        {activeWorkspace?.name || "HII"}
+                        {activeWorkspace?.name}
                       </span>
                       <span className="truncate text-xs">Free</span>
                     </div>

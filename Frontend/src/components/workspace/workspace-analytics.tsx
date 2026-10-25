@@ -1,21 +1,35 @@
+import { useQuery } from "@tanstack/react-query";
 import AnalyticsCard from "./common/analytics-card";
+import useWorkspaceId from "@/hooks/use-workspace-id";
+import { getWorkspaceAnalyticsQueryFn } from "@/lib/api";
 
 const WorkspaceAnalytics = () => {
+  const workspaceId = useWorkspaceId();
+
+  const { data, isPending } = useQuery({
+    queryKey: ["workspace-analytics", workspaceId],
+    queryFn: () => getWorkspaceAnalyticsQueryFn(workspaceId),
+    staleTime: 0,
+    enabled: !!workspaceId,
+  });
+
+  const analytics = data?.analytics;
+
   const workspaceList = [
     {
       id: "total-task",
       title: "Total Task",
-      value: 20,
+      value: analytics?.totalTasks || 0,
     },
     {
       id: "overdue-task",
       title: "Overdue Task",
-      value: 0,
+      value: analytics?.overdueTasks || 0,
     },
     {
       id: "completed-task",
       title: "Completed Task",
-      value: 4,
+      value: analytics?.completedTasks || 0,
     },
   ];
 
@@ -24,7 +38,7 @@ const WorkspaceAnalytics = () => {
       {workspaceList?.map((v) => (
         <AnalyticsCard
           key={v.id}
-          isLoading={false}
+          isLoading={isPending}
           title={v.title}
           value={v.value}
         />

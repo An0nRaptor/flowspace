@@ -1,22 +1,21 @@
-import {
-  TaskPriorityEnum,
-  TaskPriorityEnumType,
-  TaskStatusEnum,
-  TaskStatusEnumType,
-} from "@/constant";
-import { parseAsString, parseAsStringEnum, useQueryStates } from "nuqs";
+import { parseAsString, parseAsStringLiteral, useQueryStates } from "nuqs";
 
+// status / priority hold comma-separated values (multi-select filters)
 const useTaskTableFilter = () => {
   return useQueryStates({
-    status: parseAsStringEnum<TaskStatusEnumType>(
-      Object.values(TaskStatusEnum)
-    ),
-    priority: parseAsStringEnum<TaskPriorityEnumType>(
-      Object.values(TaskPriorityEnum)
-    ),
+    status: parseAsString,
+    priority: parseAsString,
     keyword: parseAsString,
     projectId: parseAsString,
     assigneeId: parseAsString,
+  });
+};
+
+export const useTaskView = () => {
+  return useQueryStates({
+    view: parseAsStringLiteral(["board", "table"] as const).withDefault(
+      "board"
+    ),
   });
 };
 

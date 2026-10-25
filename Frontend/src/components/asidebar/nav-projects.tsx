@@ -1,5 +1,14 @@
-import { ArrowRight, Folder, MoreHorizontal, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import {
+  ArrowRight,
+  Folder,
+  Loader,
+  MoreHorizontal,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,10 +30,17 @@ import useCreateProjectDialog from "@/hooks/use-create-project-dialog";
 import { ConfirmDialog } from "../resuable/confirm-dialog";
 import useConfirmDialog from "@/hooks/use-confirm-dialog";
 import { Button } from "../ui/button";
+import { Permissions } from "@/constant";
+import PermissionsGuard from "../resuable/permission-guard";
+import useGetProjectsInWorkspaceQuery from "@/hooks/api/use-get-projects";
+import { deleteProjectMutationFn } from "@/lib/api";
+import { toast } from "@/hooks/use-toast";
+import { ProjectType } from "@/types/api.type";
 
 export function NavProjects() {
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const pathname = location.pathname;
 
   const { onOpen } = useCreateProjectDialog();
@@ -34,66 +50,100 @@ export function NavProjects() {
 
   const { isMobile } = useSidebar();
 
-  const projects = [
-    {
-      id: "pro-383dh",
-      name: "Design Engineering",
-      emoji: "📊",
-      url: `/workspace/${workspaceId}/project/:pro-383dh`,
-    },
-    {
-      id: "p383dh",
-      name: "Sales & Marketing",
-      emoji: "📈",
-      url: `/workspace/${workspaceId}/project/:p383dh`,
-    },
-    {
-      id: "pro-wwhe",
-      name: "Travel",
-      emoji: "✈️",
-      url: `/workspace/${workspaceId}/project/:pro-wwhe`,
-    },
-  ];
+  const [pageSize, setPageSize] = useState(20);
 
-  const hasMore = true;
+  const { data, isPending, isFetching } = useGetProjectsInWorkspaceQuery({
+    workspaceId,
+    pageSize,
+    pageNumber: 1,
+  });
 
-  const handleConfirm = () => {};
+  const { mutate, isPending: isDeleting } = useMutation({
+    mutationFn: deleteProjectMutationFn,
+  });
+
+  const projects = data?.projects || [];
+  const pagination = data?.pagination;
+  const hasMore = (pagination?.totalPages || 1) > 1;
+
+  const handleConfirm = () => {
+    const project = context as ProjectType | null;
+    if (!project) return;
+    mutate(
+      { workspaceId, projectId: project._id },
+      {
+        onSuccess: (data) => {
+          queryClient.invalidateQueries({
+            queryKey: ["allprojects", workspaceId],
+          });
+          queryClient.invalidateQueries({
+            queryKey: ["all-tasks", workspaceId],
+          });
+          toast({
+            title: "Success",
+            description: data.message,
+            variant: "success",
+          });
+          if (pathname.includes(project._id)) {
+            navigate(`/workspace/${workspaceId}`);
+          }
+          onCloseDialog();
+        },
+        onError: (error) => {
+          toast({
+            title: "Error",
+            description: error.message,
+            variant: "destructive",
+          });
+        },
+      }
+    );
+  };
+
   return (
     <>
       <SidebarGroup className="group-data-[collapsible=icon]:hidden">
         <SidebarGroupLabel className="w-full justify-between pr-0">
           <span>Projects</span>
-          <button
-            onClick={onOpen}
-            type="button"
-            className="flex size-5 items-center justify-center rounded-full border"
-          >
-            <Plus className="size-3.5" />
-          </button>
+          <PermissionsGuard requiredPermission={Permissions.CREATE_PROJECT}>
+            <button
+              onClick={onOpen}
+              type="button"
+              className="flex size-5 items-center justify-center rounded-full border"
+            >
+              <Plus className="size-3.5" />
+            </button>
+          </PermissionsGuard>
         </SidebarGroupLabel>
         <SidebarMenu className="h-[320px] scrollbar overflow-y-auto pb-2">
-          {projects?.length === 0 ? (
+          {isPending ? (
+            <Loader className="w-5 h-5 animate-spin place-self-center" />
+          ) : null}
+
+          {!isPending && projects.length === 0 ? (
             <div className="pl-3">
               <p className="text-xs text-muted-foreground">
                 There is no projects in this Workspace yet. Projects you create
                 will show up here.
               </p>
-              <Button
-                variant="link"
-                type="button"
-                className="h-0 p-0 text-[13px] underline font-semibold mt-4"
-                onClick={onOpen}
-              >
-                Create a project
-                <ArrowRight />
-              </Button>
+              <PermissionsGuard requiredPermission={Permissions.CREATE_PROJECT}>
+                <Button
+                  variant="link"
+                  type="button"
+                  className="h-0 p-0 text-[13px] underline font-semibold mt-4"
+                  onClick={onOpen}
+                >
+                  Create a project
+                  <ArrowRight />
+                </Button>
+              </PermissionsGuard>
             </div>
           ) : (
             projects.map((item) => {
-              const projectUrl = item.url;
+              const projectUrl = `/workspace/${workspaceId}/project/${item._id}`;
 
               return (
-                <SidebarMenuItem key={item.id}>
+                <SidebarMenuItem key={item._id}>
                   <SidebarMenuButton asChild isActive={projectUrl === pathname}>
                     <Link to={projectUrl}>
                       {item.emoji}
@@ -118,14 +168,15 @@ export function NavProjects() {
                         <Folder className="text-muted-foreground" />
                         <span>View Project</span>
                       </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        disabled={false}
-                        onClick={() => onOpenDialog(item)}
+                      <PermissionsGuard
+                        requiredPermission={Permissions.DELETE_PROJECT}
                       >
-                        <Trash2 className="text-muted-foreground" />
-                        <span>Delete Project</span>
-                      </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => onOpenDialog(item)}>
+                          <Trash2 className="text-muted-foreground" />
+                          <span>Delete Project</span>
+                        </DropdownMenuItem>
+                      </PermissionsGuard>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </SidebarMenuItem>
@@ -135,9 +186,13 @@ export function NavProjects() {
 
           {hasMore && (
             <SidebarMenuItem>
-              <SidebarMenuButton className="text-sidebar-foreground/70">
+              <SidebarMenuButton
+                className="text-sidebar-foreground/70"
+                disabled={isFetching}
+                onClick={() => setPageSize((size) => size + 20)}
+              >
                 <MoreHorizontal className="text-sidebar-foreground/70" />
-                <span>More</span>
+                <span>{isFetching ? "Loading..." : "More"}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           )}
@@ -146,13 +201,13 @@ export function NavProjects() {
 
       <ConfirmDialog
         isOpen={open}
-        isLoading={false}
+        isLoading={isDeleting}
         onClose={onCloseDialog}
         onConfirm={handleConfirm}
         title="Delete Project"
         description={`Are you sure you want to delete ${
           context?.name || "this item"
-        }? This action cannot be undone.`}
+        }? All tasks in this project will be deleted too. This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
       />

@@ -21,7 +21,7 @@ import {
 import { Input } from "@/components/ui/input";
 import Logo from "@/components/logo";
 import GoogleOauthButton from "@/components/auth/google-oauth-button";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { loginMutationFn } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 import { Loader } from "lucide-react";
@@ -30,6 +30,7 @@ const SignIn = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const returnUrl = searchParams.get("returnUrl");
+  const queryClient = useQueryClient();
 
   const { mutate, isPending } = useMutation({
     mutationFn: loginMutationFn,
@@ -37,7 +38,7 @@ const SignIn = () => {
 
   const formSchema = z.object({
     email: z.string().trim().email("Invalid email address").min(1, {
-      message: "Workspace name is required",
+      message: "Email is required",
     }),
     password: z.string().trim().min(1, {
       message: "Password is required",
@@ -56,9 +57,10 @@ const SignIn = () => {
     if (isPending) return;
 
     mutate(values, {
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
         const user = data.user;
         const decodedUrl = returnUrl ? decodeURIComponent(returnUrl) : null;
+        await queryClient.refetchQueries({ queryKey: ["authUser"] });
         navigate(decodedUrl || `/workspace/${user.currentWorkspace}`);
       },
       onError: (error) => {
@@ -78,7 +80,7 @@ const SignIn = () => {
           to="/"
           className="flex items-center gap-2 self-center font-medium" >
           <Logo />
-          Team Sync.
+          FlowSpace.
         </Link>
         <div className="flex flex-col gap-6">
           <Card>
@@ -133,12 +135,6 @@ const SignIn = () => {
                                 <FormLabel className="dark:text-[#f1f7feb5] text-sm">
                                   Password
                                 </FormLabel>
-                                <a
-                                  href="#"
-                                  className="ml-auto text-sm underline-offset-4 hover:underline"
-                                >
-                                  Forgot your password?
-                                </a>
                               </div>
                               <FormControl>
                                 <Input
@@ -163,7 +159,11 @@ const SignIn = () => {
                     <div className="text-center text-sm">
                       Don&apos;t have an account?{" "}
                       <Link
-                        to="/sign-up"
+                        to={
+                          returnUrl
+                            ? `/sign-up?returnUrl=${encodeURIComponent(returnUrl)}`
+                            : "/sign-up"
+                        }
                         className="underline underline-offset-4"
                       >
                         Sign up

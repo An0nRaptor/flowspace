@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -28,7 +28,12 @@ import { registerMutationFn } from "@/lib/api";
 
 const SignUp = () => {
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnUrl = searchParams.get("returnUrl");
+  const signInUrl = returnUrl
+    ? `/?returnUrl=${encodeURIComponent(returnUrl)}`
+    : "/";
 
   const { mutate, isPending } = useMutation({
     mutationFn: registerMutationFn,
@@ -39,10 +44,10 @@ const SignUp = () => {
       message: "Name is required",
     }),
     email: z.string().trim().email("Invalid email address").min(1, {
-      message: "Workspace name is required",
+      message: "Email is required",
     }),
-    password: z.string().trim().min(1, {
-      message: "Password is required",
+    password: z.string().trim().min(4, {
+      message: "Password must be at least 4 characters",
     }),
   });
 
@@ -61,10 +66,14 @@ const SignUp = () => {
 
     mutate(values,{
       onSuccess:()=>{
-        navigate("/")
+        toast({
+          title: "Account created",
+          description: "You can now log in.",
+          variant: "success",
+        });
+        navigate(signInUrl)
       },
       onError:(error)=>{
-        console.log(error);
         toast({
           title:"Error",
           description:error.message,
@@ -73,7 +82,6 @@ const SignUp = () => {
         
       }
     })
-    console.log(values);
   };
 
   return (
@@ -84,7 +92,7 @@ const SignUp = () => {
           className="flex items-center gap-2 self-center font-medium"
         >
           <Logo />
-          Team Sync.
+          FlowSpace.
         </Link>
         <div className="flex flex-col gap-6">
           <Card>
@@ -118,7 +126,7 @@ const SignUp = () => {
                               </FormLabel>
                               <FormControl>
                                 <Input
-                                  placeholder="Joh Doe"
+                                  placeholder="John Doe"
                                   className="!h-[48px]"
                                   {...field}
                                 />
@@ -179,7 +187,7 @@ const SignUp = () => {
                     </div>
                     <div className="text-center text-sm">
                       Already have an account?{" "}
-                      <Link to="/" className="underline underline-offset-4">
+                      <Link to={signInUrl} className="underline underline-offset-4">
                         Sign in
                       </Link>
                     </div>

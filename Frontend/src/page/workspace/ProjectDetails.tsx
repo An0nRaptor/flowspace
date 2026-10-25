@@ -1,7 +1,7 @@
 import { Separator } from "@/components/ui/separator";
 import ProjectAnalytics from "@/components/workspace/project/project-analytics";
 import ProjectHeader from "@/components/workspace/project/project-header";
-import TaskTable from "@/components/workspace/task/task-table";
+import TaskViews from "@/components/workspace/task/task-views";
 
 const ProjectDetails = () => {
   return (
@@ -10,8 +10,8 @@ const ProjectDetails = () => {
       <div className="space-y-5">
         <ProjectAnalytics />
         <Separator />
-        {/* {Task Table} */}
-        <TaskTable />
+        {/* {Task Board / Table} */}
+        <TaskViews />
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { format } from "date-fns";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useMutation } from "@tanstack/react-query";
 import { CalendarIcon, Loader } from "lucide-react";
 import {
   Form,
@@ -28,24 +29,80 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "../../ui/textarea";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
-import { transformOptions } from "@/lib/helper";
+import { getAvatarColor, getAvatarFallbackText, transformOptions } from "@/lib/helper";
 import useWorkspaceId from "@/hooks/use-workspace-id";
 import { TaskPriorityEnum, TaskStatusEnum } from "@/constant";
+import useGetProjectsInWorkspaceQuery from "@/hooks/api/use-get-projects";
+import useGetWorkspaceMembers from "@/hooks/api/use-get-workspace-members";
+import useInvalidateTasks from "@/hooks/api/use-invalidate-tasks";
+import { createTaskMutationFn, editTaskMutationFn } from "@/lib/api";
+import { toast } from "@/hooks/use-toast";
+import { TaskType } from "@/types/api.type";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+const UNASSIGNED = "unassigned";
 
 export default function CreateTaskForm(props: {
   projectId?: string;
+  task?: TaskType;
   onClose: () => void;
 }) {
-  const { projectId, onClose } = props;
+  const { projectId, task, onClose } = props;
+  const isEdit = !!task;
 
   const workspaceId = useWorkspaceId();
+  const invalidateTasks = useInvalidateTasks(workspaceId);
 
-  const isLoading = false;
+  const { mutate: createTask, isPending: isCreating } = useMutation({
+    mutationFn: createTaskMutationFn,
+  });
+  const { mutate: editTask, isPending: isEditing } = useMutation({
+    mutationFn: editTaskMutationFn,
+  });
+  const isPending = isCreating || isEditing;
 
-  //const projectOptions = []
+  const { data, isLoading } = useGetProjectsInWorkspaceQuery({
+    workspaceId,
+    pageNumber: 1,
+    pageSize: 100,
+    skip: !!projectId || isEdit,
+  });
+
+  const { data: memberData } = useGetWorkspaceMembers(workspaceId);
+
+  const projectOptions =
+    data?.projects?.map((project) => ({
+      label: (
+        <div className="flex items-center gap-1">
+          <span>{project.emoji}</span>
+          <span>{project.name}</span>
+        </div>
+      ),
+      value: project._id,
+    })) || [];
 
   // Workspace Memebers
-  //const membersOptions = []
+  const membersOptions =
+    memberData?.members?.map((member) => {
+      const name = member.userId?.name || "Unknown";
+      const initials = getAvatarFallbackText(name);
+      const avatarColor = getAvatarColor(name);
+      return {
+        label: (
+          <div className="flex items-center space-x-2">
+            <Avatar className="h-7 w-7">
+              <AvatarImage
+                src={member.userId?.profilePicture || ""}
+                alt={name}
+              />
+              <AvatarFallback className={avatarColor}>{initials}</AvatarFallback>
+            </Avatar>
+            <span>{name}</span>
+          </div>
+        ),
+        value: member.userId._id,
+      };
+    }) || [];
 
   const formSchema = z.object({
     title: z.string().trim().min(1, {
@@ -67,32 +124,79 @@ export default function CreateTaskForm(props: {
         required_error: "Priority is required",
       }
     ),
-    assignedTo: z.string().trim().min(1, {
-      message: "AssignedTo is required",
-    }),
-    dueDate: z.date({
-      required_error: "A date of birth is required.",
-    }),
+    assignedTo: z.string().trim(),
+    dueDate: z.date().optional(),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: "",
-      description: "",
-      projectId: projectId ? projectId : "",
+      title: task?.title || "",
+      description: task?.description || "",
+      projectId: task?.project?._id || projectId || "",
+      status: task?.status || TaskStatusEnum.TODO,
+      priority: task?.priority || TaskPriorityEnum.MEDIUM,
+      assignedTo: task?.assignedTo?._id || UNASSIGNED,
+      dueDate: task?.dueDate ? new Date(task.dueDate) : undefined,
     },
   });
 
   const taskStatusList = Object.values(TaskStatusEnum);
-  const taskPriorityList = Object.values(TaskPriorityEnum); // ["LOW", "MEDIUM", "HIGH", "URGENT"]
+  const taskPriorityList = Object.values(TaskPriorityEnum);
 
   const statusOptions = transformOptions(taskStatusList);
   const priorityOptions = transformOptions(taskPriorityList);
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    console.log(values, { workspaceId: workspaceId });
+  const onSuccess = (message: string) => {
+    invalidateTasks();
+    toast({
+      title: "Success",
+      description: message,
+      variant: "success",
+    });
     onClose();
+  };
+
+  const onError = (error: Error) => {
+    toast({
+      title: "Error",
+      description: error.message,
+      variant: "destructive",
+    });
+  };
+
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
+    if (isPending) return;
+    const data = {
+      title: values.title,
+      description: values.description,
+      priority: values.priority,
+      status: values.status,
+      assignedTo: values.assignedTo === UNASSIGNED ? null : values.assignedTo,
+      dueDate: values.dueDate ? values.dueDate.toISOString() : undefined,
+    };
+
+    if (task) {
+      editTask(
+        {
+          taskId: task._id,
+          projectId: values.projectId,
+          workspaceId,
+          data,
+        },
+        { onSuccess: (res) => onSuccess(res.message), onError }
+      );
+      return;
+    }
+
+    createTask(
+      {
+        workspaceId,
+        projectId: values.projectId,
+        data,
+      },
+      { onSuccess: () => onSuccess("Task created successfully"), onError }
+    );
   };
 
   return (
@@ -103,7 +207,7 @@ export default function CreateTaskForm(props: {
             className="text-xl tracking-[-0.16px] dark:text-[#fcfdffef] font-semibold mb-1
            text-center sm:text-left"
           >
-            Create Task
+            {isEdit ? "Edit Task" : "Create Task"}
           </h1>
           <p className="text-muted-foreground text-sm leading-tight">
             Organize and manage tasks, resources, and team collaboration
@@ -157,7 +261,7 @@ export default function CreateTaskForm(props: {
 
             {/* {ProjectId} */}
 
-            {!projectId && (
+            {!projectId && !isEdit && (
               <div>
                 <FormField
                   control={form.control}
@@ -180,15 +284,20 @@ export default function CreateTaskForm(props: {
                               <Loader className="w-4 h-4 place-self-center flex animate-spin" />
                             </div>
                           )}
-                          <SelectItem value="m@example.com">
-                            m@example.com
-                          </SelectItem>
-                          <SelectItem value="m@google.com">
-                            m@google.com
-                          </SelectItem>
-                          <SelectItem value="m@support.com">
-                            m@support.com
-                          </SelectItem>
+                          {!isLoading && projectOptions.length === 0 && (
+                            <div className="p-2 text-sm text-muted-foreground">
+                              Create a project first
+                            </div>
+                          )}
+                          {projectOptions.map((option) => (
+                            <SelectItem
+                              key={option.value}
+                              className="cursor-pointer"
+                              value={option.value}
+                            >
+                              {option.label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -217,15 +326,16 @@ export default function CreateTaskForm(props: {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="m@example.com">
-                          m@example.com
-                        </SelectItem>
-                        <SelectItem value="m@google.com">
-                          m@google.com
-                        </SelectItem>
-                        <SelectItem value="m@support.com">
-                          m@support.com
-                        </SelectItem>
+                        <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
+                        {membersOptions.map((option) => (
+                          <SelectItem
+                            className="cursor-pointer"
+                            key={option.value}
+                            value={option.value}
+                          >
+                            {option.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -241,7 +351,12 @@ export default function CreateTaskForm(props: {
                 name="dueDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Due Date</FormLabel>
+                    <FormLabel>
+                      Due Date
+                      <span className="text-xs font-extralight ml-2">
+                        Optional
+                      </span>
+                    </FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -273,8 +388,7 @@ export default function CreateTaskForm(props: {
                               date > new Date("2100-12-31") //Prevent selection beyond a far future date
                           }
                           initialFocus
-                          defaultMonth={new Date()}
-                          fromMonth={new Date()}
+                          defaultMonth={field.value || new Date()}
                         />
                       </PopoverContent>
                     </Popover>
@@ -359,11 +473,12 @@ export default function CreateTaskForm(props: {
             </div>
 
             <Button
+              disabled={isPending}
               className="flex place-self-end  h-[40px] text-white font-semibold"
               type="submit"
             >
-              <Loader className="animate-spin" />
-              Create
+              {isPending && <Loader className="animate-spin" />}
+              {isEdit ? "Save" : "Create"}
             </Button>
           </form>
         </Form>

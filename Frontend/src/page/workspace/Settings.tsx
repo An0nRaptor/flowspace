@@ -2,6 +2,9 @@ import { Separator } from "@/components/ui/separator";
 import WorkspaceHeader from "@/components/workspace/common/workspace-header";
 import EditWorkspaceForm from "@/components/workspace/edit-workspace-form";
 import DeleteWorkspaceCard from "@/components/workspace/settings/delete-workspace-card";
+import PermissionsGuard from "@/components/resuable/permission-guard";
+import { Permissions } from "@/constant";
+import withPermission from "@/hoc/with-permission";
 
 const Settings = () => {
   return (
@@ -19,7 +22,11 @@ const Settings = () => {
               <EditWorkspaceForm />
             </div>
             <div className="pt-2">
-              <DeleteWorkspaceCard />
+              <PermissionsGuard
+                requiredPermission={Permissions.DELETE_WORKSPACE}
+              >
+                <DeleteWorkspaceCard />
+              </PermissionsGuard>
             </div>
           </div>
         </div>
@@ -28,4 +35,9 @@ const Settings = () => {
   );
 };
 
-export default Settings;
+const SettingsWithPermission = withPermission(
+  Settings,
+  Permissions.MANAGE_WORKSPACE_SETTINGS
+);
+
+export default SettingsWithPermission;

@@ -1,13 +1,51 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { ConfirmDialog } from "@/components/resuable/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import useConfirmDialog from "@/hooks/use-confirm-dialog";
+import { useAuthContext } from "@/context/auth-provider";
+import useWorkspaceId from "@/hooks/use-workspace-id";
+import { deleteWorkspaceMutationFn } from "@/lib/api";
+import { toast } from "@/hooks/use-toast";
 
 const DeleteWorkspaceCard = () => {
+  const { workspace } = useAuthContext();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const workspaceId = useWorkspaceId();
+
   const { open, onOpenDialog, onCloseDialog } = useConfirmDialog();
 
-  const isPending = false;
+  const { mutate, isPending } = useMutation({
+    mutationFn: deleteWorkspaceMutationFn,
+  });
 
-  const handleConfirm = () => {};
+  const handleConfirm = () => {
+    mutate(workspaceId, {
+      onSuccess: (data) => {
+        queryClient.invalidateQueries({
+          queryKey: ["userWorkspaces"],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["authUser"],
+        });
+        onCloseDialog();
+        toast({
+          title: "Success",
+          description: "Workspace deleted successfully",
+          variant: "success",
+        });
+        navigate(data.currentWorkspace ? `/workspace/${data.currentWorkspace}` : "/");
+      },
+      onError: (error) => {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      },
+    });
+  };
   return (
     <>
       <div className="w-full">
@@ -44,7 +82,7 @@ const DeleteWorkspaceCard = () => {
         isLoading={isPending}
         onClose={onCloseDialog}
         onConfirm={handleConfirm}
-        title={`Delete  Test co Workspace`}
+        title={`Delete ${workspace?.name} Workspace`}
         description={`Are you sure you want to delete? This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
