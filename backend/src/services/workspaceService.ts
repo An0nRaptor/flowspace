@@ -51,7 +51,6 @@ export const createWorkspaceService = async (
 
   await user.save();
 
-  console.log("✅ Created workspace:", workspace);
   return { workspace };
 
 };
@@ -59,10 +58,11 @@ export const createWorkspaceService = async (
 export const getAllWorkspacesUserIsMemberService = async (userId: string) => {
   const memberships = await MemberModel.find({ userId })
     .populate("workspaceId")
-    .select("-password")
     .exec();
 
-  const workspaces = memberships.map((membership) => membership);
+  const workspaces = memberships
+    .map((membership) => membership.workspaceId)
+    .filter(Boolean);
 
   return { workspaces };
 };
@@ -90,7 +90,7 @@ export const getWorkspaceMembersService = async (workspaceId: string) => {
   const members = await MemberModel.find({
     workspaceId,
   })
-    .populate("userId", "name email profilePicture -password")
+    .populate("userId", "name email profilePicture")
     .populate("role", "name");
 
   const roles = await RoleModel.find({}, { name: 1, _id: 1 })
@@ -193,7 +193,7 @@ export const deleteWorkspaceService = async (
       throw new NotFoundException("Workspace not found.");
     }
     // Check if user owns the workplace;
-    if (workspace.owner.toString() !== userId) {
+    if (workspace.owner.toString() !== userId.toString()) {
       throw new BadRequestException(
         "You are not authorized to delete this workspace."
       );
@@ -230,7 +230,7 @@ export const deleteWorkspaceService = async (
       await user.save({ session });
     }
 
-    await workspace.deleteOne(session);
+    await workspace.deleteOne({ session });
 
     await session.commitTransaction();
 

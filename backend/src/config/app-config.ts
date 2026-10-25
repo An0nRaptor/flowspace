@@ -6,9 +6,10 @@ const appConfig=()=>({
     PORT:getEnv("PORT","5000"),
     BASE_PATH:getEnv("BASE_PATH","/api"),
     MONGO_URL:getEnv("MONGO_URL",""),
+    DNS_SERVERS:getEnv("DNS_SERVERS","none"),
 
     SESSION_SECRET:getEnv("SESSION_SECRET"),
-    SESSION_EXPIRES_IN:getEnv("SESSION_SECRET"),
+    SESSION_EXPIRES_IN:getEnv("SESSION_EXPIRES_IN","1d"),
 
     GOOGLE_CLIENT_ID:getEnv("GOOGLE_CLIENT_ID"),
     GOOGLE_CLIENT_SECRET:getEnv("GOOGLE_CLIENT_SECRET"),

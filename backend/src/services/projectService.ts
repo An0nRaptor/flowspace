@@ -43,7 +43,7 @@ export const getProjectInWorkspaceService = async (
   })
     .skip(skip)
     .limit(pageSize)
-    .populate("createdBy", "_id name profilePicture -password")
+    .populate("createdBy", "_id name profilePicture")
     .sort({ createdAt: -1 });
 
   const totalPages = Math.ceil(totalCount / pageSize);

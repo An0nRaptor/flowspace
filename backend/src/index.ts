@@ -1,4 +1,4 @@
-import express, { NextFunction, Request, Response } from "express";
+import express, { Request, Response } from "express";
 import "dotenv/config";
 import cors from "cors";
 import passport from "passport";
@@ -9,7 +9,6 @@ import connectDatabase from "./config/database-config";
 import { errorHandler } from "./middlewares/errorHandler";
 import { HTTPSTATUS } from "./config/http-config";
 import { asyncHandler } from "./middlewares/asyncHandler";
-import { BadRequestException } from "./utils/appError";
 import authRoutes from "./routes/authRoute";
 import userRoutes from "./routes/userRoute";
 import isAuthenticated from "./middlewares/isAuthenticated";
@@ -23,16 +22,18 @@ const app = express();
 const BASE_PATH = config.BASE_PATH;
 
 app.use(express.json());
-app.use(cors({
-  origin: 'http://localhost:5173',
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: config.FRONTEND_ORIGIN,
+    credentials: true,
+  })
+);
 app.use(express.urlencoded({ extended: true }));
 app.use(
   session({
     name: "session",
     keys: [config.SESSION_SECRET],
-    maxAge: 24 * 60 * 1000,
+    maxAge: 24 * 60 * 60 * 1000,
     secure: config.NODE_ENV === "production",
     httpOnly: true,
     sameSite: "lax",
@@ -44,11 +45,9 @@ app.use(passport.session());
 
 app.get(
   "/",
-  asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    throw new BadRequestException("This is a bad req");
-
+  asyncHandler(async (req: Request, res: Response) => {
     res.status(HTTPSTATUS.OK).json({
-      message: "Hello World",
+      message: "FlowSpace API is running.",
     });
   })
 );

@@ -147,11 +147,11 @@ export const getAllTasksService = async (
   const skip = (pageNumber - 1) * pageSize;
 
   const [tasks, totalCount] = await Promise.all([
-    TaskModel.findById(query)
+    TaskModel.find(query)
       .skip(skip)
       .limit(pageSize)
       .sort({ createdAt: -1 })
-      .populate("assignedTo", "_id name profilePicture -password")
+      .populate("assignedTo", "_id name profilePicture")
       .populate("project", "_id emoji name"),
     TaskModel.countDocuments(query),
   ]);
@@ -186,7 +186,7 @@ export const getTaskByIdService = async (
     _id: taskId,
     workspace: workspaceId,
     project: projectId,
-  }).populate("assignedTo", "_id name profilePicture -password");
+  }).populate("assignedTo", "_id name profilePicture");
 
   if (!task) {
     throw new Error("Task not found.");

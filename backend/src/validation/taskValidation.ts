@@ -25,6 +25,7 @@ export const createTaskSchema = z.object({
     description:descriptionSchema,
     priority:prioritySchema,
     status:statusSchema,
+    assignedTo:assignedToSchema,
     dueDate:dueDateSchema
 })
 
@@ -33,5 +34,6 @@ export const updateTaskSchema = z.object({
     description:descriptionSchema,
     priority:prioritySchema,
     status:statusSchema,
+    assignedTo:assignedToSchema,
     dueDate:dueDateSchema
 })

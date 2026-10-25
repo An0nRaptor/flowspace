@@ -26,7 +26,7 @@ export const createProjectController = asyncHandler(
 
     const userId = req.user?._id;
     const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
-    roleGuard(role, [Permissions.CREATE_WORKSPACE]);
+    roleGuard(role, [Permissions.CREATE_PROJECT]);
 
     const { project } = await createProjectService(userId, workspaceId, body);
 
@@ -45,7 +45,7 @@ export const getAllProjectsInWorkspaceController = asyncHandler(
     roleGuard(role, [Permissions.VIEW_ONLY]);
 
     const pageSize = parseInt(req.query.pageSize as string) || 10;
-    const pageNumber = parseInt(req.query.pageNumber as string) || 10;
+    const pageNumber = parseInt(req.query.pageNumber as string) || 1;
 
     const { projects, totalCount, totalPages, skip } =
       await getProjectInWorkspaceService(workspaceId, pageSize, pageNumber);
@@ -71,7 +71,7 @@ export const getProjectByIdAndWorkspaceId = asyncHandler(
 
     const workspaceId = workspaceIdSchema.parse(req.params.workspaceId);
 
-    const { userId } = req.user?._id;
+    const userId = req.user?._id;
 
     const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
     roleGuard(role, [Permissions.VIEW_ONLY]);
@@ -94,12 +94,12 @@ export const getProjectAnalyticsController = asyncHandler(
 
     const workspaceId = workspaceIdSchema.parse(req.params.workspaceId);
 
-    const { userId } = req.user?._id;
+    const userId = req.user?._id;
 
     const { role } = await getMemberRoleInWorkspace(userId, workspaceId);
     roleGuard(role,[Permissions.VIEW_ONLY])
 
-    const {analytics} = await getProjectAnalyticsService(projectId, workspaceId);
+    const {analytics} = await getProjectAnalyticsService(workspaceId, projectId);
 
     return res.status(HTTPSTATUS.OK).json({
       message:"Project analytics retrieved successfully.",
@@ -114,7 +114,7 @@ export const updateProjectController = asyncHandler(
     const body = createProjectSchema.parse(req.body);
     const projectId = projectIdSchema.parse(req.params.id)
     const workspaceId = workspaceIdSchema.parse(req.params.workspaceId)
-      const { userId } = req.user?._id;
+      const userId = req.user?._id;
 
     const {role} = await getMemberRoleInWorkspace(userId, workspaceId);
 
