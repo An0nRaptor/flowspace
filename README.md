@@ -8,6 +8,15 @@ members with roles (Owner / Admin / Member) and invite links.
 
 ## Run locally
 
+Quick start (after the one-time setup below), from the `flowspace` folder:
+
+```bash
+npm install   # once, installs the runner
+npm run dev   # starts backend (8000) + frontend (5173) together
+```
+
+One-time setup:
+
 ```bash
 # 1. backend (port 8000)
 cd backend
