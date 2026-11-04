@@ -6,7 +6,7 @@ import {
   Paperclip,
   Pencil,
 } from "lucide-react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import useWorkspaceId from "@/hooks/use-workspace-id";
 import { getTaskByIdQueryFn } from "@/lib/api";
@@ -47,6 +47,7 @@ const EditTaskDialog = (props: {
   return (
     <Dialog modal={true} open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-2xl max-h-[95vh] overflow-y-auto my-5 border-0">
+        <DialogTitle className="sr-only">{fullTask.title}</DialogTitle>
         {isOpen && (
           <Tabs defaultValue={defaultTab} className="w-full">
             <TabsList className="mb-3 flex w-full justify-start overflow-x-auto">

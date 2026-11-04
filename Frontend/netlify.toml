@@ -10,13 +10,13 @@
 
 [[redirects]]
   from = "/api/*"
-  to = "https://flowspace-api.onrender.com/api/:splat"
+  to = "https://flowspace-api-tdnh.onrender.com/api/:splat"
   status = 200
   force = true
 
 [[redirects]]
   from = "/socket.io/*"
-  to = "https://flowspace-api.onrender.com/socket.io/:splat"
+  to = "https://flowspace-api-tdnh.onrender.com/socket.io/:splat"
   status = 200
   force = true
 

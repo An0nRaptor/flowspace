@@ -35,9 +35,10 @@ export const getSocket = () => {
     socket = io(getSocketOrigin(), {
       withCredentials: true,
       autoConnect: false,
-      // Default order: start with long polling (works through any proxy,
-      // including Netlify's), then upgrade to WebSocket where possible.
-      transports: ["polling", "websocket"],
+      // Production goes through Netlify's proxy, which can't carry
+      // WebSockets, so it stays on long polling. In dev (Vite proxy) the
+      // connection upgrades to a WebSocket.
+      transports: import.meta.env.PROD ? ["polling"] : ["polling", "websocket"],
     });
   }
   return socket;
