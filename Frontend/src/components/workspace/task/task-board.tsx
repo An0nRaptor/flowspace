@@ -27,6 +27,8 @@ import { AllTaskResponseType, TaskType } from "@/types/api.type";
 import { priorities, statuses } from "./table/data";
 import { DataTableFilterToolbar } from "./task-table";
 import EditTaskDialog from "./edit-task-dialog";
+import { LabelChips } from "../label/label-chip";
+import { ChecklistProgress } from "./details/task-checklist";
 
 const BOARD_PAGE_SIZE = 200;
 
@@ -41,9 +43,7 @@ const TaskBoard = () => {
 
   const [filters, setFilters] = useTaskTableFilter();
   const [dragTaskId, setDragTaskId] = useState<string | null>(null);
-  const [overColumn, setOverColumn] = useState<TaskStatusEnumType | null>(
-    null
-  );
+  const [overColumn, setOverColumn] = useState<TaskStatusEnumType | null>(null);
   const [editingTask, setEditingTask] = useState<TaskType | null>(null);
 
   // The board shows every status as a column, so the status filter is ignored.
@@ -56,6 +56,7 @@ const TaskBoard = () => {
     filters.priority,
     filters.assigneeId,
     filters.projectId,
+    filters.labels,
   ];
 
   const { data, isLoading } = useQuery({
@@ -66,6 +67,7 @@ const TaskBoard = () => {
         keyword: filters.keyword,
         priority: filters.priority,
         assignedTo: filters.assigneeId,
+        labels: filters.labels,
         projectId: projectId || filters.projectId,
         pageNumber: 1,
         pageSize: BOARD_PAGE_SIZE,
@@ -178,8 +180,8 @@ const TaskBoard = () => {
                 }}
                 onDrop={(e) => handleDrop(e, status)}
                 className={cn(
-                  "flex flex-col shrink-0 w-[272px] rounded-lg bg-gray-50 border transition-colors",
-                  overColumn === status && "bg-gray-100 border-gray-400"
+                  "flex flex-col shrink-0 w-[272px] rounded-lg bg-muted/50 border transition-colors",
+                  overColumn === status && "bg-muted border-foreground/40"
                 )}
               >
                 <div className="flex items-center justify-between px-3 py-2.5">
@@ -275,8 +277,9 @@ const TaskCard = ({
       onDragEnd={onDragEnd}
       onClick={onClick}
       className={cn(
-        "rounded-md border bg-white p-3 shadow-sm space-y-2 select-none",
-        draggable && "cursor-grab active:cursor-grabbing hover:border-gray-400",
+        "rounded-md border bg-card p-3 shadow-sm space-y-2 select-none",
+        draggable &&
+          "cursor-grab active:cursor-grabbing hover:border-foreground/40",
         isDragging && "opacity-40"
       )}
     >
@@ -295,9 +298,13 @@ const TaskCard = ({
         )}
       </div>
 
+      <LabelChips labels={task.labels} />
+
       <p className="text-sm font-medium leading-snug break-words">
         {task.title}
       </p>
+
+      <ChecklistProgress checklist={task.checklist} />
 
       {showProject && task.project && (
         <div className="flex items-center gap-1 text-xs text-muted-foreground">

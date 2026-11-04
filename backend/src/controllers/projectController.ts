@@ -17,6 +17,10 @@ import {
   updateProjectService,
 } from "../services/projectService";
 import { HTTPSTATUS } from "../config/http-config";
+import { logActivityService } from "../services/activityService";
+import { emitToWorkspace } from "../config/socket-config";
+import { ActivityActionEnum } from "../enums/activity";
+import { SocketEventEnum } from "../enums/socket";
 
 export const createProjectController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -29,6 +33,18 @@ export const createProjectController = asyncHandler(
     roleGuard(role, [Permissions.CREATE_PROJECT]);
 
     const { project } = await createProjectService(userId, workspaceId, body);
+
+    await logActivityService({
+      workspaceId,
+      userId,
+      action: ActivityActionEnum.PROJECT_CREATED,
+      message: `created project ${project.emoji || ""} ${project.name}`,
+      projectId: String(project._id),
+    });
+    emitToWorkspace(workspaceId, SocketEventEnum.PROJECT_CHANGED, {
+      projectId: String(project._id),
+      actorId: String(userId),
+    });
 
     return res.status(HTTPSTATUS.CREATED).json({
       message: "Project created successfully.",
@@ -122,6 +138,11 @@ export const updateProjectController = asyncHandler(
 
     const {project} = await updateProjectService(workspaceId,projectId,body);
 
+    emitToWorkspace(workspaceId, SocketEventEnum.PROJECT_CHANGED, {
+      projectId,
+      actorId: String(userId),
+    });
+
     return res.status(HTTPSTATUS.OK).json({
 
       message:"Project updated successfull.",
@@ -144,7 +165,23 @@ export const deleteProjectController = asyncHandler(
 
     roleGuard(role,[Permissions.DELETE_PROJECT]);
 
-    await deleteProjectService(workspaceId, projectId);
+    const project = await deleteProjectService(workspaceId, projectId);
+
+    // The project is gone, so the entry is kept at workspace level.
+    await logActivityService({
+      workspaceId,
+      userId,
+      action: ActivityActionEnum.PROJECT_DELETED,
+      message: `deleted project ${project.emoji || ""} ${project.name}`,
+    });
+    emitToWorkspace(workspaceId, SocketEventEnum.PROJECT_CHANGED, {
+      projectId,
+      actorId: String(userId),
+    });
+    emitToWorkspace(workspaceId, SocketEventEnum.TASK_CHANGED, {
+      projectId,
+      actorId: String(userId),
+    });
 
     return res.status(HTTPSTATUS.OK).json({
       message:"Project deleted successfully.",

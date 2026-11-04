@@ -29,7 +29,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "../../ui/textarea";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
-import { getAvatarColor, getAvatarFallbackText, transformOptions } from "@/lib/helper";
+import {
+  getAvatarColor,
+  getAvatarFallbackText,
+  transformOptions,
+} from "@/lib/helper";
 import useWorkspaceId from "@/hooks/use-workspace-id";
 import { TaskPriorityEnum, TaskStatusEnum } from "@/constant";
 import useGetProjectsInWorkspaceQuery from "@/hooks/api/use-get-projects";
@@ -39,6 +43,7 @@ import { createTaskMutationFn, editTaskMutationFn } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 import { TaskType } from "@/types/api.type";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import LabelPicker from "../label/label-picker";
 
 const UNASSIGNED = "unassigned";
 
@@ -95,7 +100,9 @@ export default function CreateTaskForm(props: {
                 src={member.userId?.profilePicture || ""}
                 alt={name}
               />
-              <AvatarFallback className={avatarColor}>{initials}</AvatarFallback>
+              <AvatarFallback className={avatarColor}>
+                {initials}
+              </AvatarFallback>
             </Avatar>
             <span>{name}</span>
           </div>
@@ -126,6 +133,7 @@ export default function CreateTaskForm(props: {
     ),
     assignedTo: z.string().trim(),
     dueDate: z.date().optional(),
+    labels: z.array(z.string()),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -138,6 +146,7 @@ export default function CreateTaskForm(props: {
       priority: task?.priority || TaskPriorityEnum.MEDIUM,
       assignedTo: task?.assignedTo?._id || UNASSIGNED,
       dueDate: task?.dueDate ? new Date(task.dueDate) : undefined,
+      labels: task?.labels?.map((label) => label._id) || [],
     },
   });
 
@@ -174,6 +183,7 @@ export default function CreateTaskForm(props: {
       status: values.status,
       assignedTo: values.assignedTo === UNASSIGNED ? null : values.assignedTo,
       dueDate: values.dueDate ? values.dueDate.toISOString() : undefined,
+      labels: values.labels,
     };
 
     if (task) {
@@ -338,6 +348,31 @@ export default function CreateTaskForm(props: {
                         ))}
                       </SelectContent>
                     </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* {Labels} */}
+            <div>
+              <FormField
+                control={form.control}
+                name="labels"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Labels
+                      <span className="text-xs font-extralight ml-2">
+                        Optional
+                      </span>
+                    </FormLabel>
+                    <FormControl>
+                      <LabelPicker
+                        value={field.value}
+                        onChange={field.onChange}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

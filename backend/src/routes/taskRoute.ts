@@ -1,5 +1,6 @@
  import { Router } from "express";
-import { createTaskController, deleteTaskController, getAllTasksController, getTaskByIdController, updateTaskController } from "../controllers/taskController";
+import { addChecklistItemController, createTaskController, deleteAttachmentController, deleteChecklistItemController, deleteTaskController, downloadAttachmentController, getAllTasksController, getTaskByIdController, updateChecklistItemController, updateTaskController, uploadAttachmentController } from "../controllers/taskController";
+import { uploadSingleFile } from "../middlewares/upload";
 
  const taskRoutes = Router();
 
@@ -8,6 +9,14 @@ import { createTaskController, deleteTaskController, getAllTasksController, getT
  taskRoutes.delete("/:id/workspace/:workspaceId/delete", deleteTaskController)
  taskRoutes.get("/workspace/:workspaceId/all", getAllTasksController)
  taskRoutes.get("/:id/project/:projectId/workspace/:workspaceId", getTaskByIdController)
+
+ taskRoutes.post("/:id/workspace/:workspaceId/checklist", addChecklistItemController)
+ taskRoutes.put("/:id/workspace/:workspaceId/checklist/:itemId", updateChecklistItemController)
+ taskRoutes.delete("/:id/workspace/:workspaceId/checklist/:itemId", deleteChecklistItemController)
+
+ taskRoutes.post("/:id/workspace/:workspaceId/attachments", uploadSingleFile, uploadAttachmentController)
+ taskRoutes.get("/:id/workspace/:workspaceId/attachments/:attachmentId", downloadAttachmentController)
+ taskRoutes.delete("/:id/workspace/:workspaceId/attachments/:attachmentId", deleteAttachmentController)
 
 
  export default taskRoutes;

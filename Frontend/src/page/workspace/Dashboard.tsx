@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import RecentProjects from "@/components/workspace/project/recent-projects";
 import RecentTasks from "@/components/workspace/task/recent-tasks";
 import RecentMembers from "@/components/workspace/member/recent-members";
+import ActivityFeed from "@/components/workspace/activity/activity-feed";
 import PermissionsGuard from "@/components/resuable/permission-guard";
 import { Permissions } from "@/constant";
 const WorkspaceDashboard = () => {
@@ -32,7 +33,7 @@ const WorkspaceDashboard = () => {
       <WorkspaceAnalytics />
       <div className="mt-4">
         <Tabs defaultValue="projects" className="w-full border rounded-lg p-2">
-          <TabsList className="w-full justify-start border-0 bg-gray-50 px-1 h-12">
+          <TabsList className="w-full justify-start border-0 bg-muted/60 px-1 h-12 overflow-x-auto">
             <TabsTrigger className="py-2" value="projects">
               Recent Projects
             </TabsTrigger>
@@ -41,6 +42,9 @@ const WorkspaceDashboard = () => {
             </TabsTrigger>
             <TabsTrigger className="py-2" value="members">
               Recent Members
+            </TabsTrigger>
+            <TabsTrigger className="py-2" value="activity">
+              Recent Activity
             </TabsTrigger>
           </TabsList>
           <TabsContent value="projects">
@@ -51,6 +55,9 @@ const WorkspaceDashboard = () => {
           </TabsContent>
           <TabsContent value="members">
             <RecentMembers />
+          </TabsContent>
+          <TabsContent value="activity" className="px-2 pt-2">
+            <ActivityFeed compact />
           </TabsContent>
         </Tabs>
       </div>

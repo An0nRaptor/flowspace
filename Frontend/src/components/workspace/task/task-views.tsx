@@ -1,8 +1,9 @@
-import { Columns3, Table2 } from "lucide-react";
+import { CalendarDays, Columns3, Table2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTaskView } from "@/hooks/use-task-table-filter";
 import TaskBoard from "./task-board";
 import TaskTable from "./task-table";
+import TaskCalendar from "./task-calendar";
 
 const TaskViews = () => {
   const [{ view }, setView] = useTaskView();
@@ -22,9 +23,15 @@ const TaskViews = () => {
             <Table2 className="h-4 w-4" />
             Table
           </TabsTrigger>
+          <TabsTrigger value="calendar" className="gap-1.5">
+            <CalendarDays className="h-4 w-4" />
+            Calendar
+          </TabsTrigger>
         </TabsList>
       </Tabs>
-      {view === "board" ? <TaskBoard /> : <TaskTable />}
+      {view === "board" && <TaskBoard />}
+      {view === "table" && <TaskTable />}
+      {view === "calendar" && <TaskCalendar />}
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import { parseAsString, parseAsStringLiteral, useQueryStates } from "nuqs";
 
-// status / priority hold comma-separated values (multi-select filters)
+// status / priority / labels hold comma-separated values (multi-select filters)
 const useTaskTableFilter = () => {
   return useQueryStates({
     status: parseAsString,
@@ -8,14 +8,17 @@ const useTaskTableFilter = () => {
     keyword: parseAsString,
     projectId: parseAsString,
     assigneeId: parseAsString,
+    labels: parseAsString,
   });
 };
 
 export const useTaskView = () => {
   return useQueryStates({
-    view: parseAsStringLiteral(["board", "table"] as const).withDefault(
-      "board"
-    ),
+    view: parseAsStringLiteral([
+      "board",
+      "table",
+      "calendar",
+    ] as const).withDefault("board"),
   });
 };
 

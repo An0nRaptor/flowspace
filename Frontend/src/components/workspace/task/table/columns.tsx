@@ -19,6 +19,7 @@ import {
 import { priorities, statuses } from "./data";
 import { TaskType } from "@/types/api.type";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { LabelChips } from "../../label/label-chip";
 
 export const getColumns = (projectId?: string): ColumnDef<TaskType>[] => {
   const columns: ColumnDef<TaskType>[] = [
@@ -57,9 +58,10 @@ export const getColumns = (projectId?: string): ColumnDef<TaskType>[] => {
             <Badge variant="outline" className="capitalize shrink-0 h-[25px]">
               {row.original.taskCode}
             </Badge>
-            <span className="block lg:max-w-[220px] max-w-[200px] font-medium">
-              {row.original.title}
-            </span>
+            <div className="flex flex-col gap-1 lg:max-w-[220px] max-w-[200px]">
+              <span className="block font-medium">{row.original.title}</span>
+              <LabelChips labels={row.original.labels} />
+            </div>
           </div>
         );
       },

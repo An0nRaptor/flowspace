@@ -41,7 +41,7 @@ const RecentTasks = () => {
         </div>
       )}
 
-      <ul role="list" className="divide-y divide-gray-200">
+      <ul role="list" className="divide-y divide-border">
         {tasks.map((task) => {
           const name = task?.assignedTo?.name || "";
           const initials = getAvatarFallbackText(name);
@@ -49,17 +49,17 @@ const RecentTasks = () => {
           return (
             <li
               key={task._id}
-              className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+              className="p-4 flex items-center justify-between hover:bg-muted transition-colors"
             >
               {/* Task Info */}
               <div className="flex flex-col space-y-1 flex-grow">
-                <span className="text-sm text-gray-600 font-medium">
+                <span className="text-sm text-muted-foreground font-medium">
                   {task.taskCode}
                 </span>
-                <p className="text-md font-semibold text-gray-800 truncate">
+                <p className="text-md font-semibold text-foreground truncate">
                   {task.title}
                 </p>
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-muted-foreground">
                   Due: {task.dueDate ? format(task.dueDate, "PPP") : "None"}
                 </span>
               </div>

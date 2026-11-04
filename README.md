@@ -44,3 +44,14 @@ lookups. Set `DNS_SERVERS=8.8.8.8,1.1.1.1` in `backend/.env`.
 - Workspace and project analytics (total, overdue, completed tasks)
 - Invite link to join a workspace; owners change member roles
 - Permission-aware UI: members can create and edit tasks; only admins and owners can manage projects and settings
+- Live updates (Socket.io): boards, comments and notifications refresh in every open tab without reloading
+- Task comments with @mentions (mentioned teammates get a notification)
+- Notifications bell: mentions, assignments, due-soon and overdue reminders
+- Activity log for the workspace and for each task
+- Checklists inside tasks, with a progress bar on the card
+- Labels with colours (create from the task form, manage in Settings) and a label filter
+- Calendar view: tasks by due date, drag to reschedule
+- Global search with Ctrl+K / Cmd+K (tasks, projects, pages)
+- Dark mode (light / dark / system)
+- File attachments on tasks (up to 10 files, 5 MB each, stored in MongoDB GridFS)
+- Email reminders for tasks due within 24 hours or overdue; set the SMTP_* values in `backend/.env` (see `.env.example`), otherwise they are only shown in the app

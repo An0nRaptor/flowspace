@@ -11,6 +11,8 @@ const useInvalidateTasks = (workspaceId: string) => {
       queryKey: ["workspace-analytics", workspaceId],
     });
     queryClient.invalidateQueries({ queryKey: ["project-analytics"] });
+    queryClient.invalidateQueries({ queryKey: ["task"] });
+    queryClient.invalidateQueries({ queryKey: ["activities", workspaceId] });
   }, [queryClient, workspaceId]);
 };
 

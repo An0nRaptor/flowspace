@@ -18,6 +18,12 @@ export default defineConfig({
         target: "http://localhost:8000",
         changeOrigin: false,
       },
+      // Live updates (Socket.io) go to the same backend.
+      "/socket.io": {
+        target: "http://localhost:8000",
+        changeOrigin: false,
+        ws: true,
+      },
     },
   },
 });

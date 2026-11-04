@@ -16,6 +16,9 @@ import useGetProjectsInWorkspaceQuery from "@/hooks/api/use-get-projects";
 import useGetWorkspaceMembers from "@/hooks/api/use-get-workspace-members";
 import { getAvatarColor, getAvatarFallbackText } from "@/lib/helper";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import useGetLabels from "@/hooks/api/use-get-labels";
+import { labelDotClasses } from "@/constant";
+import { cn } from "@/lib/utils";
 
 type Filters = ReturnType<typeof useTaskTableFilter>[0];
 type SetFilters = ReturnType<typeof useTaskTableFilter>[1];
@@ -57,6 +60,7 @@ const TaskTable = () => {
         status: filters.status,
         projectId: projectId || filters.projectId,
         assignedTo: filters.assigneeId,
+        labels: filters.labels,
         pageNumber,
         pageSize,
       }),
@@ -137,6 +141,25 @@ export const DataTableFilterToolbar: FC<DataTableFilterToolbarProps> = ({
   // Workspace Memebers
   const { data: memberData } = useGetWorkspaceMembers(workspaceId);
 
+  // Workspace Labels
+  const { data: labelData } = useGetLabels(workspaceId);
+
+  const labelOptions =
+    labelData?.labels?.map((label) => ({
+      label: (
+        <div className="flex items-center gap-2">
+          <span
+            className={cn(
+              "h-2.5 w-2.5 rounded-full",
+              labelDotClasses[label.color]
+            )}
+          />
+          <span>{label.name}</span>
+        </div>
+      ),
+      value: label._id,
+    })) || [];
+
   const assignees =
     memberData?.members?.map((member) => {
       const name = member.userId?.name || "Unknown";
@@ -150,7 +173,9 @@ export const DataTableFilterToolbar: FC<DataTableFilterToolbarProps> = ({
                 src={member.userId?.profilePicture || ""}
                 alt={name}
               />
-              <AvatarFallback className={avatarColor}>{initials}</AvatarFallback>
+              <AvatarFallback className={avatarColor}>
+                {initials}
+              </AvatarFallback>
             </Avatar>
             <span>{name}</span>
           </div>
@@ -210,6 +235,18 @@ export const DataTableFilterToolbar: FC<DataTableFilterToolbarProps> = ({
         onFilterChange={(values) => handleFilterChange("assigneeId", values)}
       />
 
+      {/* Labels filter */}
+      {labelOptions.length > 0 && (
+        <DataTableFacetedFilter
+          title="Labels"
+          multiSelect={true}
+          options={labelOptions}
+          disabled={isLoading}
+          selectedValues={filters.labels?.split(",") || []}
+          onFilterChange={(values) => handleFilterChange("labels", values)}
+        />
+      )}
+
       {!projectId && (
         <DataTableFacetedFilter
           title="Projects"
@@ -235,6 +272,7 @@ export const DataTableFilterToolbar: FC<DataTableFilterToolbarProps> = ({
               priority: null,
               projectId: null,
               assigneeId: null,
+              labels: null,
             })
           }
         >

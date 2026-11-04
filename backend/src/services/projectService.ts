@@ -2,7 +2,9 @@ import mongoose from "mongoose";
 import { TaskStatusEnum } from "../enums/task";
 import ProjectModel from "../models/Project";
 import TaskModel from "../models/Task";
+import CommentModel from "../models/Comment";
 import { NotFoundException } from "../utils/appError";
+import { deleteAttachmentFilesService } from "./attachmentService";
 
 export const createProjectService = async (
   userId: string,
@@ -168,9 +170,22 @@ export const deleteProjectService = async (
 
   await project.deleteOne();
 
+  const tasks = await TaskModel.find({ project: project._id }).select(
+    "_id attachments.fileId"
+  );
+
   await TaskModel.deleteMany({
     project: project._id,
   });
+
+  await CommentModel.deleteMany({
+    task: { $in: tasks.map((task) => task._id) },
+  });
+  await deleteAttachmentFilesService(
+    tasks.flatMap((task) =>
+      task.attachments.map((attachment) => attachment.fileId)
+    )
+  );
 
   return project;
 };

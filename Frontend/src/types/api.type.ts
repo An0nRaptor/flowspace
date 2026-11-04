@@ -1,4 +1,5 @@
 import {
+  LabelColorEnumType,
   PermissionType,
   TaskPriorityEnumType,
   TaskStatusEnumType,
@@ -223,6 +224,7 @@ export type CreateTaskPayloadType = {
     status: TaskStatusEnumType;
     assignedTo: string | null;
     dueDate?: string;
+    labels?: string[];
   };
 };
 
@@ -237,6 +239,7 @@ export type EditTaskPayloadType = {
     status: TaskStatusEnumType;
     assignedTo: string | null;
     dueDate?: string;
+    labels?: string[];
   };
 };
 
@@ -259,6 +262,9 @@ export type TaskType = {
   createdBy?: string;
   dueDate: string | null;
   taskCode: string;
+  labels?: LabelType[];
+  checklist?: ChecklistItemType[];
+  attachments?: AttachmentType[];
   createdAt?: string;
   updatedAt?: string;
 };
@@ -271,6 +277,9 @@ export type AllTaskPayloadType = {
   status?: string | null;
   assignedTo?: string | null;
   dueDate?: string | null;
+  labels?: string | null;
+  dueFrom?: string | null;
+  dueTo?: string | null;
   pageNumber?: number | null;
   pageSize?: number | null;
 };
@@ -279,4 +288,131 @@ export type AllTaskResponseType = {
   message: string;
   tasks: TaskType[];
   pagination: PaginationType;
+};
+
+export type TaskByIdResponseType = {
+  message: string;
+  task: TaskType;
+};
+
+//********** */ LABEL, CHECKLIST, ATTACHMENT TYPES ****
+//************************************************* */
+
+export type LabelType = {
+  _id: string;
+  name: string;
+  color: LabelColorEnumType;
+};
+
+export type AllLabelsResponseType = {
+  message: string;
+  labels: LabelType[];
+};
+
+export type CreateLabelPayloadType = {
+  workspaceId: string;
+  data: {
+    name: string;
+    color: LabelColorEnumType;
+  };
+};
+
+export type ChecklistItemType = {
+  _id: string;
+  text: string;
+  completed: boolean;
+};
+
+export type ChecklistResponseType = {
+  message: string;
+  checklist: ChecklistItemType[];
+};
+
+export type AttachmentType = {
+  _id: string;
+  name: string;
+  size: number;
+  mimeType: string;
+  uploadedBy:
+    | {
+        _id: string;
+        name: string;
+        profilePicture: string | null;
+      }
+    | string;
+  createdAt: string;
+};
+
+//********** */ COMMENT, ACTIVITY, NOTIFICATION TYPES ****
+//************************************************* */
+
+type UserSummaryType = {
+  _id: string;
+  name: string;
+  profilePicture: string | null;
+};
+
+export type CommentType = {
+  _id: string;
+  content: string;
+  task: string;
+  author: UserSummaryType;
+  mentions: { _id: string; name: string }[];
+  createdAt: string;
+};
+
+export type AllCommentsResponseType = {
+  message: string;
+  comments: CommentType[];
+};
+
+export type CreateCommentPayloadType = {
+  workspaceId: string;
+  taskId: string;
+  data: {
+    content: string;
+    mentions: string[];
+  };
+};
+
+export type ActivityType = {
+  _id: string;
+  action: string;
+  message: string;
+  actor: UserSummaryType | null;
+  project: { _id: string; name: string; emoji: string } | null;
+  task: { _id: string; title: string; taskCode: string } | null;
+  createdAt: string;
+};
+
+export type AllActivitiesPayloadType = {
+  workspaceId: string;
+  projectId?: string;
+  taskId?: string;
+  pageNumber?: number;
+  pageSize?: number;
+};
+
+export type AllActivitiesResponseType = {
+  message: string;
+  activities: ActivityType[];
+  pagination: PaginationType;
+};
+
+export type NotificationType = {
+  _id: string;
+  type: "MENTION" | "ASSIGNED" | "DUE_SOON" | "OVERDUE";
+  message: string;
+  workspace: string;
+  actor: UserSummaryType | null;
+  project: { _id: string; name: string; emoji: string } | null;
+  task: { _id: string; title: string; taskCode: string } | null;
+  read: boolean;
+  createdAt: string;
+};
+
+export type AllNotificationsResponseType = {
+  message: string;
+  notifications: NotificationType[];
+  unreadCount: number;
 };

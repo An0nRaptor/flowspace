@@ -9,6 +9,11 @@ import { BadRequestException, NotFoundException } from "../utils/appError";
 import TaskModel from "../models/Task";
 import { TaskStatusEnum } from "../enums/task";
 import ProjectModel from "../models/Project";
+import CommentModel from "../models/Comment";
+import LabelModel from "../models/Label";
+import ActivityModel from "../models/Activity";
+import NotificationModel from "../models/Notification";
+import { deleteAttachmentFilesService } from "./attachmentService";
 
 export const createWorkspaceService = async (
   userId: string,
@@ -52,7 +57,6 @@ export const createWorkspaceService = async (
   await user.save();
 
   return { workspace };
-
 };
 
 export const getAllWorkspacesUserIsMemberService = async (userId: string) => {
@@ -183,6 +187,7 @@ export const deleteWorkspaceService = async (
 ) => {
   const session = await mongoose.startSession();
   session.startTransaction();
+  let attachmentFileIds: mongoose.Types.ObjectId[] = [];
 
   try {
     const workspace = await WorkspaceModel.findById(workspaceId).session(
@@ -209,9 +214,27 @@ export const deleteWorkspaceService = async (
       session
     );
 
+    const tasks = await TaskModel.find({ workspace: workspace._id })
+      .select("attachments.fileId")
+      .session(session);
+    attachmentFileIds = tasks.flatMap((task) =>
+      task.attachments.map((attachment) => attachment.fileId)
+    );
+
     await TaskModel.deleteMany({ workspace: workspace._id }).session(session);
 
     await MemberModel.deleteMany({ workspaceId: workspace._id }).session(
+      session
+    );
+
+    await CommentModel.deleteMany({ workspace: workspace._id }).session(
+      session
+    );
+    await LabelModel.deleteMany({ workspace: workspace._id }).session(session);
+    await ActivityModel.deleteMany({ workspace: workspace._id }).session(
+      session
+    );
+    await NotificationModel.deleteMany({ workspace: workspace._id }).session(
       session
     );
 
@@ -235,6 +258,9 @@ export const deleteWorkspaceService = async (
     await session.commitTransaction();
 
     session.endSession();
+
+    // GridFS files are outside the transaction; remove them once it commits.
+    await deleteAttachmentFilesService(attachmentFileIds);
 
     return { currentWorkspace: user.currentWorkspace };
   } catch (error) {

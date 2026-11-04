@@ -143,7 +143,7 @@ export function DataTableFacetedFilter({
             {selectedValueSet.size > 0 && (
               <>
                 <CommandSeparator />
-                <CommandGroup className="sticky bottom-0 align-bottom bg-white">
+                <CommandGroup className="sticky bottom-0 align-bottom bg-popover">
                   <CommandItem
                     onSelect={() => onFilterChange([])} // Clear all filters
                     className="justify-center text-center"

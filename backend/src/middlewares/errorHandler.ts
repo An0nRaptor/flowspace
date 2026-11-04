@@ -3,6 +3,7 @@ import { HTTPSTATUS } from "../config/http-config";
 import { AppError } from "../utils/appError";
 import { z, ZodError } from "zod";
 import { ErrorCodeEnum } from "../enums/errorCode";
+import { MulterError } from "multer";
 
 const formatZodError = (res: Response, error: z.ZodError) => {
 
@@ -35,6 +36,16 @@ export const errorHandler: ErrorRequestHandler = (
 
   if (error instanceof ZodError) {
     return formatZodError(res, error);
+  }
+
+  if (error instanceof MulterError) {
+    return res.status(HTTPSTATUS.BAD_REQUEST).json({
+      message:
+        error.code === "LIMIT_FILE_SIZE"
+          ? "File is too large. The limit is 5 MB."
+          : error.message,
+      errorCode: ErrorCodeEnum.VALIDATION_ERROR,
+    });
   }
 
   if (error instanceof AppError) {
