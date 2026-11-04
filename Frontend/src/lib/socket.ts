@@ -35,7 +35,9 @@ export const getSocket = () => {
     socket = io(getSocketOrigin(), {
       withCredentials: true,
       autoConnect: false,
-      transports: ["websocket", "polling"],
+      // Default order: start with long polling (works through any proxy,
+      // including Netlify's), then upgrade to WebSocket where possible.
+      transports: ["polling", "websocket"],
     });
   }
   return socket;

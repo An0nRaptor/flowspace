@@ -23,6 +23,10 @@ export const initSocket = (
       origin: config.FRONTEND_ORIGIN,
       credentials: true,
     },
+    // Netlify's proxy can't carry WebSockets, so production uses long
+    // polling; keep each poll under the proxy's ~26 s timeout.
+    pingInterval: 20000,
+    pingTimeout: 20000,
   });
 
   // Reuse the cookie session, so a socket belongs to the logged-in user.

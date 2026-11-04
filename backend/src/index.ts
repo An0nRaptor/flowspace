@@ -23,11 +23,17 @@ import notificationRoutes from "./routes/notificationRoute";
 import { createServer } from "http";
 import { initSocket } from "./config/socket-config";
 import { startReminderScheduler } from "./services/reminderService";
+import { startDemoCleanupScheduler } from "./services/demoService";
+import { ensureDefaultRolesService } from "./services/roleService";
 
 const app = express();
 const httpServer = createServer(app);
 
 const BASE_PATH = config.BASE_PATH;
+
+// In production requests arrive through Netlify and Render proxies over
+// HTTPS; trust their forwarded headers so secure cookies and req.ip work.
+app.set("trust proxy", true);
 
 app.use(express.json());
 app.use(
@@ -79,5 +85,7 @@ app.use(errorHandler);
 httpServer.listen(config.PORT, async () => {
   console.log(`Server is running on port ${config.PORT} in ${config.NODE_ENV}`);
   await connectDatabase();
+  await ensureDefaultRolesService();
   startReminderScheduler();
+  startDemoCleanupScheduler();
 });

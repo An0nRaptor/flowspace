@@ -49,6 +49,9 @@ const sendReminder = async (task: ReminderTask, overdue: boolean) => {
     ? `${task.project.emoji} ${task.project.name}`
     : "";
 
+  // Demo accounts have made-up addresses; keep their reminders in-app.
+  if (task.assignedTo.email.endsWith("@flowspace.demo")) return;
+
   await sendMail({
     to: task.assignedTo.email,
     subject: overdue ? `Overdue: ${task.title}` : `Due soon: ${task.title}`,

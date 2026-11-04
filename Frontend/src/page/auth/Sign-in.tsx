@@ -21,6 +21,8 @@ import {
 import { Input } from "@/components/ui/input";
 import Logo from "@/components/logo";
 import GoogleOauthButton from "@/components/auth/google-oauth-button";
+import DemoLoginButton from "@/components/auth/demo-login-button";
+import { isGoogleLoginEnabled } from "@/lib/auth-options";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { loginMutationFn } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
@@ -78,7 +80,8 @@ const SignIn = () => {
       <div className="flex w-full max-w-sm flex-col gap-6">
         <Link
           to="/"
-          className="flex items-center gap-2 self-center font-medium" >
+          className="flex items-center gap-2 self-center font-medium"
+        >
           <Logo />
           FlowSpace.
         </Link>
@@ -87,7 +90,8 @@ const SignIn = () => {
             <CardHeader className="text-center">
               <CardTitle className="text-xl">Welcome back</CardTitle>
               <CardDescription>
-                Login with your Email or Google account
+                Login with your Email
+                {isGoogleLoginEnabled && " or Google account"}, or try the demo
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -95,7 +99,10 @@ const SignIn = () => {
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                   <div className="grid gap-6">
                     <div className="flex flex-col gap-4">
-                      <GoogleOauthButton label="Login" />
+                      <DemoLoginButton />
+                      {isGoogleLoginEnabled && (
+                        <GoogleOauthButton label="Login" />
+                      )}
                     </div>
                     <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
                       <span className="relative z-10 bg-background px-2 text-muted-foreground">
@@ -152,7 +159,8 @@ const SignIn = () => {
                       <Button
                         type="submit"
                         className="w-full"
-                        disabled={isPending}>
+                        disabled={isPending}
+                      >
                         {isPending && <Loader className="animate-spin" />}Login
                       </Button>
                     </div>
@@ -161,7 +169,9 @@ const SignIn = () => {
                       <Link
                         to={
                           returnUrl
-                            ? `/sign-up?returnUrl=${encodeURIComponent(returnUrl)}`
+                            ? `/sign-up?returnUrl=${encodeURIComponent(
+                                returnUrl
+                              )}`
                             : "/sign-up"
                         }
                         className="underline underline-offset-4"

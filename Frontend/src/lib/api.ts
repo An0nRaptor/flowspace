@@ -47,6 +47,14 @@ export const registerMutationFn = async (data: registerType) => {
   return response.data;
 };
 
+export const demoLoginMutationFn = async (): Promise<LoginResponseType> => {
+  // Building the sample workspace can take a few seconds on a cold server.
+  const response = await API.post("/auth/demo", undefined, {
+    timeout: 60000,
+  });
+  return response.data;
+};
+
 export const logoutMutationFn = async () => {
   await API.post("/auth/logout");
 };

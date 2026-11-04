@@ -3,6 +3,7 @@ import { config } from "../config/app-config";
 import { HTTPSTATUS } from "../config/http-config";
 import { asyncHandler } from "../middlewares/asyncHandler";
 import { registerUserService } from "../services/authService";
+import { createDemoAccountService } from "../services/demoService";
 import { registerSchema } from "../validation/authValidation";
 import { Express, NextFunction, Request, Response } from "express";
 
@@ -69,16 +70,52 @@ export const loginController = asyncHandler(
   }
 );
 
+// A few demo workspaces per visitor per hour is plenty.
+const DEMO_LIMIT_PER_HOUR = 5;
+const demoRequests = new Map<string, number[]>();
+
+export const demoLoginController = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const ip = req.ip || "unknown";
+    const hourAgo = Date.now() - 60 * 60 * 1000;
+    const recent = (demoRequests.get(ip) || []).filter((t) => t > hourAgo);
+
+    if (recent.length >= DEMO_LIMIT_PER_HOUR) {
+      return res.status(HTTPSTATUS.TOO_MANY_REQUESTS).json({
+        message: "Too many demo accounts from this network. Try again later.",
+      });
+    }
+    demoRequests.set(ip, [...recent, Date.now()]);
+
+    const { user } = await createDemoAccountService();
+
+    req.login(user as Express.User, (err) => {
+      if (err) {
+        return next(err);
+      }
+
+      return res.status(HTTPSTATUS.OK).json({
+        message: "Logged in to the demo workspace.",
+        user,
+      });
+    });
+  }
+);
+
 export const logOutContoller = asyncHandler(
   async (req: Request, res: Response) => {
     req.logout((err) => {
       if (err) {
         console.error("Logout error.", err);
-        return res.status(HTTPSTATUS.INTERNAL_SERVER_ERROR).json({error:"Falied to logout."})
+        return res
+          .status(HTTPSTATUS.INTERNAL_SERVER_ERROR)
+          .json({ error: "Falied to logout." });
       }
     });
 
     req.session = null;
-    return res.status(HTTPSTATUS.OK).json({message:"Logged out successfully."})
+    return res
+      .status(HTTPSTATUS.OK)
+      .json({ message: "Logged out successfully." });
   }
 );

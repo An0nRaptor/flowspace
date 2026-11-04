@@ -8,6 +8,7 @@ export interface UserDocument extends Document {
   profilePicture: string | null;
   isActive: boolean;
   lastLogin: Date | null;
+  isDemo: boolean;
   createdAt: Date;
   updatedAt: Date;
   currentWorkspace: mongoose.Types.ObjectId | null;
@@ -45,6 +46,12 @@ const userSchema = new Schema<UserDocument>(
     isActive: {
       type: Boolean,
       default: true,
+    },
+    // Visitors' "Try the demo" accounts; removed after 24 hours.
+    isDemo: {
+      type: Boolean,
+      default: false,
+      index: true,
     },
     lastLogin: {
       type: Date,
