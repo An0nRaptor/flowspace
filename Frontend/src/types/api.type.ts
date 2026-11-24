@@ -228,6 +228,26 @@ export type CreateTaskPayloadType = {
   };
 };
 
+// AI task generator: suggestions are reviewed in the UI, then created with
+// the normal create-task API.
+export type SuggestedTaskType = {
+  title: string;
+  description: string;
+  priority: TaskPriorityEnumType;
+  dueDate: string | null;
+};
+
+export type SuggestTasksPayloadType = {
+  workspaceId: string;
+  projectId: string;
+  text: string;
+};
+
+export type SuggestTasksResponseType = {
+  message: string;
+  tasks: SuggestedTaskType[];
+};
+
 export type EditTaskPayloadType = {
   taskId: string;
   workspaceId: string;

@@ -20,6 +20,7 @@ import commentRoutes from "./routes/commentRoute";
 import labelRoutes from "./routes/labelRoute";
 import activityRoutes from "./routes/activityRoute";
 import notificationRoutes from "./routes/notificationRoute";
+import aiRoutes from "./routes/aiRoute";
 import { createServer } from "http";
 import { initSocket } from "./config/socket-config";
 import { startReminderScheduler } from "./services/reminderService";
@@ -79,6 +80,7 @@ app.use(`${BASE_PATH}/comment`, isAuthenticated, commentRoutes);
 app.use(`${BASE_PATH}/label`, isAuthenticated, labelRoutes);
 app.use(`${BASE_PATH}/activity`, isAuthenticated, activityRoutes);
 app.use(`${BASE_PATH}/notification`, isAuthenticated, notificationRoutes);
+app.use(`${BASE_PATH}/ai`, isAuthenticated, aiRoutes);
 
 app.use(errorHandler);
 

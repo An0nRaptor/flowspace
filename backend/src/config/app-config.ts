@@ -24,7 +24,10 @@ const appConfig=()=>({
     SMTP_USER:getEnv("SMTP_USER","none"),
     SMTP_PASS:getEnv("SMTP_PASS","none"),
     MAIL_FROM:getEnv("MAIL_FROM","FlowSpace <no-reply@flowspace.app>"),
-    REMINDER_INTERVAL_MINUTES:getEnv("REMINDER_INTERVAL_MINUTES","15")
+    REMINDER_INTERVAL_MINUTES:getEnv("REMINDER_INTERVAL_MINUTES","15"),
+
+    // AI task generator: leave ANTHROPIC_API_KEY unset ("none") to turn it off
+    ANTHROPIC_API_KEY:getEnv("ANTHROPIC_API_KEY","none")
 })
 
 

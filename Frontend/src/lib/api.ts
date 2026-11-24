@@ -31,6 +31,8 @@ import {
   ProjectByIdPayloadType,
   ProjectResponseType,
   registerType,
+  SuggestTasksPayloadType,
+  SuggestTasksResponseType,
   WorkspaceByIdResponseType,
 } from "@/types/api.type";
 
@@ -221,6 +223,26 @@ export const createTaskMutationFn = async ({
   const response = await API.post(
     `/task/projects/${projectId}/workspace/${workspaceId}/create`,
     data
+  );
+  return response.data;
+};
+
+//********** AI ****************
+export const getAiStatusQueryFn = async (): Promise<{ enabled: boolean }> => {
+  const response = await API.get(`/ai/status`);
+  return response.data;
+};
+
+export const suggestTasksMutationFn = async ({
+  workspaceId,
+  projectId,
+  text,
+}: SuggestTasksPayloadType): Promise<SuggestTasksResponseType> => {
+  const response = await API.post(
+    `/ai/projects/${projectId}/workspace/${workspaceId}/suggest-tasks`,
+    { text },
+    // The model can take longer than the client's default 10s timeout.
+    { timeout: 90000 }
   );
   return response.data;
 };

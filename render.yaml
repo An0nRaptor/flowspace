@@ -19,6 +19,10 @@ services:
         value: /api
       - key: MONGO_URL
         sync: false
+      # AI task generator (Claude). Paste the key in the Render dashboard;
+      # without it the AI button explains that AI isn't set up.
+      - key: ANTHROPIC_API_KEY
+        sync: false
       - key: SESSION_SECRET
         generateValue: true
       - key: FRONTEND_ORIGIN

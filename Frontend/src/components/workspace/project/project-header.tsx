@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import CreateTaskDialog from "../task/create-task-dialog";
+import AiTaskDialog from "../task/ai-task-dialog";
 import EditProjectDialog from "./edit-project-dialog";
 import useWorkspaceId from "@/hooks/use-workspace-id";
 import { getProjectByIdQueryFn } from "@/lib/api";
@@ -51,7 +52,10 @@ const ProjectHeader = () => {
           <EditProjectDialog project={project} />
         </PermissionsGuard>
       </div>
-      <CreateTaskDialog projectId={projectId} />
+      <div className="flex items-center gap-2">
+        <AiTaskDialog projectId={projectId} />
+        <CreateTaskDialog projectId={projectId} />
+      </div>
     </div>
   );
 };
