@@ -38,6 +38,41 @@ type Suggestion = SuggestedTaskType & { selected: boolean };
 
 const EXAMPLE = `Sprint planning: Priya will redesign the pricing page by next Friday, it's urgent because of the launch. We also need to fix the login bug on Safari, and someone should write release notes for v2.1. Nice to have: dark mode for the settings page.`;
 
+// The public demo runs without an API key (every live call costs money), so
+// it shows this saved example of Claude's output for EXAMPLE instead.
+const nextFriday = () => {
+  const date = new Date();
+  date.setDate(date.getDate() + ((5 - date.getDay() + 7) % 7 || 7));
+  return format(date, "yyyy-MM-dd");
+};
+
+const sampleSuggestions = (): SuggestedTaskType[] => [
+  {
+    title: "Redesign the pricing page",
+    description: "Priya owns this. Urgent: it needs to be ready for the launch.",
+    priority: "HIGH",
+    dueDate: nextFriday(),
+  },
+  {
+    title: "Fix the login bug on Safari",
+    description: "Users can't log in on Safari; reproduce and fix before release.",
+    priority: "HIGH",
+    dueDate: null,
+  },
+  {
+    title: "Write release notes for v2.1",
+    description: "",
+    priority: "MEDIUM",
+    dueDate: null,
+  },
+  {
+    title: "Add dark mode to the settings page",
+    description: "Nice to have, not required for the launch.",
+    priority: "LOW",
+    dueDate: null,
+  },
+];
+
 const AiTaskDialog = (props: { projectId: string }) => {
   const { projectId } = props;
   const workspaceId = useWorkspaceId();
@@ -61,6 +96,7 @@ const AiTaskDialog = (props: { projectId: string }) => {
 
   const priorityOptions = transformOptions(Object.values(TaskPriorityEnum));
   const selectedCount = suggestions?.filter((s) => s.selected).length || 0;
+  const isSampleMode = status?.enabled === false;
 
   const reset = () => {
     setText("");
@@ -71,6 +107,8 @@ const AiTaskDialog = (props: { projectId: string }) => {
     if (isAdding) return;
     setIsOpen(open);
     if (!open) reset();
+    // Sample mode only has a saved answer for the example notes.
+    if (open && isSampleMode) setText(EXAMPLE);
   };
 
   const onError = (error: Error) => {
@@ -82,6 +120,12 @@ const AiTaskDialog = (props: { projectId: string }) => {
   };
 
   const onGenerate = () => {
+    if (isSampleMode) {
+      setSuggestions(
+        sampleSuggestions().map((task) => ({ ...task, selected: true }))
+      );
+      return;
+    }
     if (isGenerating || text.trim().length < 10) return;
     suggestTasks(
       { workspaceId, projectId, text },
@@ -149,7 +193,7 @@ const AiTaskDialog = (props: { projectId: string }) => {
     }
   };
 
-  if (!status?.enabled) return null;
+  if (!status) return null;
 
   return (
     <PermissionsGuard requiredPermission={Permissions.CREATE_TASK}>
@@ -173,6 +217,15 @@ const AiTaskDialog = (props: { projectId: string }) => {
             </DialogDescription>
           </DialogHeader>
 
+          {isSampleMode && (
+            <p className="rounded-md border border-dashed bg-muted/50 px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+              Live AI is turned off in this public demo to keep it free.
+              {suggestions
+                ? " These are a saved example of what Claude returns for the notes above. You can still edit them and add them to the board."
+                : " You'll see a saved example of what Claude returns for these notes."}
+            </p>
+          )}
+
           {!suggestions ? (
             <div className="space-y-3">
               <Textarea
@@ -182,6 +235,7 @@ const AiTaskDialog = (props: { projectId: string }) => {
                 rows={8}
                 maxLength={4000}
                 disabled={isGenerating}
+                readOnly={isSampleMode}
                 aria-label="Notes to turn into tasks"
               />
               <div className="flex items-center justify-between gap-3">
@@ -209,7 +263,7 @@ const AiTaskDialog = (props: { projectId: string }) => {
                   ) : (
                     <>
                       <Sparkles />
-                      Generate tasks
+                      {isSampleMode ? "Show example result" : "Generate tasks"}
                     </>
                   )}
                 </Button>
